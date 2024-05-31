@@ -1,0 +1,132 @@
+---
+name: Post Template Create
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{github.ref}}-${{github.workflow}}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  repository-projects: read
+
+jobs:
+  setup:
+    name: Repository Setup
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+      REPO_NAME: ${{ github.event.repository.name }}
+      REPO_OWNER: ${{ github.event.repository.owner.login }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Template-repository name
+        id: template
+        run: |
+          REPO_INFO=$(curl -L \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME})
+          TEMPLATE_REPO_NAME=$(echo $REPO_INFO | jq -r '.template_repository.name')
+          echo "name=${TEMPLATE_REPO_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Find and Replace
+        if: ${{ steps.template.outputs.name != '' && steps.template.outputs.name != 'null' }}
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: '${{ steps.template.outputs.name }}'
+          replace: '${{ github.event.repository.name }}'
+
+      - name: Remove File
+        run: git rm CHANGELOG.md
+        continue-on-error: true
+
+      - name: Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+
+      - name: Add Collaborators
+        run: |
+          for collaborator in $(echo "${COLLABORATORS}" | jq -c '.[]'); do
+            TEAM_SLUG=$(echo "${collaborator}" | jq -r '.teams')
+            PERMISSION=$(echo "${collaborator}" | jq -r '.permission')
+            echo "Team: $TEAM_SLUG, Permission: $PERMISSION"
+            curl -L \
+              -X PUT \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/orgs/tandfgroup/teams/$TEAM_SLUG/repos/${REPO_OWNER}/${REPO_NAME}" \
+              -d "{\"permission\":\"$PERMISSION\"}"
+          done
+        env:
+          COLLABORATORS: |
+            [
+              { "teams": "bypass", "permission": "maintain" },
+              { "teams": "everything-as-code", "permission": "push" },
+              { "teams": "everything-as-code-admins", "permission": "admin" },
+              { "teams": "everything-as-code-squad", "permission": "maintain" },
+              { "teams": "ops", "permission": "push" },
+              { "teams": "owners", "permission": "admin" }
+            ]
+
+
+      - name: Add Branch Protection
+        run: |
+          curl -L \
+            -X PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/branches/main/protection \
+            -d '{
+              "required_status_checks": {
+                "strict": true,
+                "contexts": []
+              },
+              "enforce_admins": true,
+              "required_pull_request_reviews": {
+                "dismissal_restrictions": {
+                  "users": [],
+                  "teams": ["bypass"]
+                },
+                "dismiss_stale_reviews": true,
+                "require_code_owner_reviews": true,
+                "required_approving_review_count": 2,
+                "require_last_push_approval": true,
+                "bypass_pull_request_allowances": {
+                  "users": [],
+                  "teams": ["bypass"]
+                }
+              },
+              "restrictions": {
+                "users": [],
+                "teams": [],
+                "apps": []
+              },
+              "required_linear_history": false,
+              "allow_force_pushes": false,
+              "allow_deletions": false,
+              "block_creations": false,
+              "required_conversation_resolution": true,
+              "lock_branch": false,
+              "allow_fork_syncing": false
+            }'
+
+      - name: Disable this workflow
+        run: gh workflow disable "$GITHUB_WORKFLOW"
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_GITHUB || secrets.GITHUB_TOKEN }}
+          GITHUB_WORKFLOW: ${{ github.workflow }}
