@@ -16,7 +16,7 @@ jobs:
       - name: Generate Access Token
         run: python generate_token.py
         env:
-          GITHUB_APP_ID: ${{ secrets.GIT_APP_ID }}
+          GITHUB_APP_ID: ${{ vars.GIT_APP_ID }}
           GITHUB_PRIVATE_KEY: ${{ secrets.GIT_APP_PRIVATE_KEY }}  # Pass private key directly
           GITHUB_API_URL: "https://api.github.com"
 
