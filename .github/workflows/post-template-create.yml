@@ -14,12 +14,15 @@ jobs:
         run: pip install PyJWT requests
 
       - name: Generate Access Token
+        id: generate_token
         run: python access_token.py
         env:
           GITHUB_APP_ID: ${{ vars.GIT_APP_ID }}
           GITHUB_PRIVATE_KEY: ${{ secrets.GIT_APP_PRIVATE_KEY }}  # Pass private key directly
           GITHUB_API_URL: "https://api.github.com"
 
-      - name: Use Access Token
+      - name: Verify access token by listing repositories
         run: |
-          echo "Access Token is available for further steps!"
+          curl -H "Authorization: Bearer ${{ steps.generate_token.outputs.access_token }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/installation/repositories
