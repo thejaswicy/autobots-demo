@@ -6,7 +6,7 @@ import os
 
 # GitHub App credentials
 APP_ID = os.getenv("GITHUB_APP_ID")
-PRIVATE_KEY_PATH = os.getenv("GITHUB_PRIVATE_KEY_PATH")
+PRIVATE_KEY = os.getenv("GITHUB_PRIVATE_KEY")  # Private key is passed as a secret
 GITHUB_API_URL = os.getenv("GITHUB_API_URL", "https://api.github.com")
 
 # Proxy settings (for self-hosted runners)
@@ -23,8 +23,8 @@ def get_proxies():
 
 def generate_jwt():
     """Generate a JWT using the GitHub App's private key."""
-    with open(PRIVATE_KEY_PATH, "rb") as key_file:
-        private_key = key_file.read()
+    if not PRIVATE_KEY:
+        raise Exception("Missing GitHub App private key.")
 
     payload = {
         "iat": int(time.time()),  # Issued at time
@@ -32,7 +32,7 @@ def generate_jwt():
         "iss": APP_ID  # GitHub App ID
     }
 
-    return jwt.encode(payload, private_key, algorithm="RS256")
+    return jwt.encode(payload, PRIVATE_KEY, algorithm="RS256")
 
 def get_installation_id(jwt_token):
     """Retrieve the installation ID dynamically from GitHub API."""
