@@ -14,7 +14,7 @@ jobs:
         run: pip install PyJWT requests
 
       - name: Generate Access Token
-        run: python generate_token.py
+        run: python access_token.py
         env:
           GITHUB_APP_ID: ${{ vars.GIT_APP_ID }}
           GITHUB_PRIVATE_KEY_PATH: ${{ secrets.GIT_APP_PRIVATE_KEY }}
