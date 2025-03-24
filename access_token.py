@@ -72,7 +72,8 @@ if __name__ == "__main__":
         access_token = get_access_token(installation_id, jwt_token)
 
         print(f"::add-mask::{access_token}")  # Mask the token in logs
-        print(f"::set-output name=access_token::{access_token}")  # Set output for GitHub Actions
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+            print(f"access_token={access_token}", file=f)
 
     except Exception as e:
         print(f"❌ Error: {e}")
