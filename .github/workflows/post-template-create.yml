@@ -29,6 +29,11 @@ jobs:
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/installation/repositories
 
+      - name: Debug Access Token
+        run: |
+          echo "Access Token: ${{ steps.generate_token.outputs.access_token }}"
+
+
 
   use-token:
     runs-on: ubuntu-latest
@@ -39,3 +44,7 @@ jobs:
           curl -H "Authorization: Bearer ${{ needs.generate-token.outputs.access_token }}" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/installation/repositories
+
+      - name: Debug Access Token
+        run: |
+          echo "Access Token: ${{ needs.generate-token.outputs.access_token }}"
