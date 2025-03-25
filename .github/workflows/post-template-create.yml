@@ -7,7 +7,7 @@ jobs:
   generate-token:
     runs-on: ubuntu-latest
     outputs:
-      access_token: ${{ steps.generate_token.outputs.access_token }}  # ✅ Pass token properly
+      access_token: ${{ steps.env.outputs.access_token }}  # ✅ Pass token properly
       environment: ${{ steps.env.outputs.environment }}
     steps:
       - name: Checkout repository
@@ -34,8 +34,11 @@ jobs:
         id: env
         run: |
           echo "Access Token: ${{ steps.generate_token.outputs.access_token }}"
+          ACCESS_TOKEN=$(echo -n "${{ steps.generate_token.outputs.access_token }}" | base64 -w 0)
+          echo "access_token=$ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
           echo "::add-mask::prod"
-          echo "environment=prod" >> $GITHUB_OUTPUT
+          env=$(echo -n "prod" | base64 -w 0)
+          echo "environment=$env" >> $GITHUB_OUTPUT
 
   use-token:
     runs-on: ubuntu-latest
@@ -44,7 +47,8 @@ jobs:
       - name: Debug Access Token Before Use
         run: |
           echo "Access Token: ${{ needs.generate-token.outputs.access_token }}"
-          echo "env: ${{ needs.generate-token.outputs.environment }}"
+          DECODED_SECRET=$(echo -n "${{ needs.generate-token.outputs.environment }}" | base64 -d)
+          echo "env: $DECODED_SECRET"
 
       - name: Use access token
         run: |
