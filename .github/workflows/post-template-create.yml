@@ -47,6 +47,8 @@ jobs:
       - name: Debug Access Token Before Use
         run: |
           echo "Access Token: ${{ needs.generate-token.outputs.access_token }}"
+          ACCESS_TOKEN=$(echo -n "${{ needs.generate-token.outputs.access_token }}" | base64 -d)
+          echo "Access_token: $ACCESS_TOKEN"
           DECODED_SECRET=$(echo -n "${{ needs.generate-token.outputs.environment }}" | base64 -d)
           echo "env: $DECODED_SECRET"
 
