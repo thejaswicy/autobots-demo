@@ -34,6 +34,7 @@ jobs:
         id: env
         run: |
           echo "Access Token: ${{ steps.generate_token.outputs.access_token }}"
+          echo "::add-mask::prod"
           echo "environment=prod" >> $GITHUB_OUTPUT
 
   use-token:
