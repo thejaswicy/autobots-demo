@@ -48,9 +48,7 @@ jobs:
         id: token
         run: |
           ACCESS_TOKEN=$(echo -n "${{ needs.generate-token.outputs.access_token }}" | base64 -d)
-          echo "access_token: $ACCESS_TOKEN" >> $GITHUB_OUTPUT
-          DECODED_SECRET=$(echo -n "${{ needs.generate-token.outputs.environment }}" | base64 -d)
-          echo "env: $DECODED_SECRET"
+          echo "access_token=$ACCESS_TOKEN" >> $GITHUB_OUTPUT
 
       - name: Use access token
         run: |
