@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       access_token: ${{ steps.generate_token.outputs.access_token }}  # ✅ Pass token properly
+      environment: ${{ steps.env.outputs.environment }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,8 +31,10 @@ jobs:
                https://api.github.com/installation/repositories
 
       - name: Debug Access Token
+        id: env
         run: |
           echo "Access Token: ${{ steps.generate_token.outputs.access_token }}"
+          echo "environment=prod" >> $GITHUB_OUTPUT
 
   use-token:
     runs-on: ubuntu-latest
@@ -40,6 +43,7 @@ jobs:
       - name: Debug Access Token Before Use
         run: |
           echo "Access Token: ${{ needs.generate-token.outputs.access_token }}"
+          echo "env: ${{ needs.generate-token.outputs.environment }}"
 
       - name: Use access token
         run: |
