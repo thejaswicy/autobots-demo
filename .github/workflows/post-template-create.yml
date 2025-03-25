@@ -47,9 +47,8 @@ jobs:
       - name: Debug Access Token Before Use
         id: token
         run: |
-          ACCESS_TOKEN=$(echo -n "${{ needs.generate-token.outputs.access_token }}" | base64 -d | tr -d '\n')
-          echo "::add-mask::$ACCESS_TOKEN"  # Mask secret
-          echo "access_token=$ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
+          ACCESS_TOKEN=$(echo -n "${{ needs.generate-token.outputs.access_token }}" | base64 -d)
+          echo "access_token: $ACCESS_TOKEN" >> $GITHUB_OUTPUT
           DECODED_SECRET=$(echo -n "${{ needs.generate-token.outputs.environment }}" | base64 -d)
           echo "env: $DECODED_SECRET"
 
