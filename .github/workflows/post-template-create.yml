@@ -47,14 +47,14 @@ jobs:
       - name: Debug Access Token Before Use
         id: token
         run: |
-          echo "Access Token: ${{ needs.generate-token.outputs.access_token }}"
-          ACCESS_TOKEN=$(echo -n "${{ needs.generate-token.outputs.access_token }}" | base64 -d)
-          echo "Access_token: $ACCESS_TOKEN" >> $GITHUB_OUTPUT
+          ACCESS_TOKEN=$(echo -n "${{ needs.generate-token.outputs.access_token }}" | base64 -d | tr -d '\n')
+          echo "::add-mask::$ACCESS_TOKEN"  # Mask secret
+          echo "access_token=$ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
           DECODED_SECRET=$(echo -n "${{ needs.generate-token.outputs.environment }}" | base64 -d)
           echo "env: $DECODED_SECRET"
 
       - name: Use access token
         run: |
-          curl -H "Authorization: Bearer ${{ steps.id.outputs.Access_token }}" \
+          curl -H "Authorization: Bearer ${{ steps.id.outputs.access_token }}" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/installation/repositories
