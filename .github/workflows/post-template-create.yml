@@ -48,10 +48,10 @@ jobs:
         id: token
         run: |
           ACCESS_TOKEN=$(echo -n "${{ needs.generate-token.outputs.access_token }}" | base64 -d)
-          echo "access_token=$ACCESS_TOKEN" >> $GITHUB_OUTPUT
+          echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
 
       - name: Use access token
         run: |
-          curl -H "Authorization: Bearer ${{ steps.id.outputs.access_token }}" \
+          curl -H "Authorization: Bearer $ACCESS_TOKEN" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/installation/repositories
