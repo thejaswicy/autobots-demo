@@ -43,7 +43,7 @@ if __name__ == "__main__":
         access_token = get_access_token(installation_id, jwt_token)
 
         # Mask the token in logs
-        # print(f"::add-mask::{access_token}")
+        print(f"::add-mask::{access_token}")
 
         # ✅ Correct way to pass output
         with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
