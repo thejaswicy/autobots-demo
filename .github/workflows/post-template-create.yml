@@ -60,8 +60,8 @@ jobs:
         shell: bash
         run: |
           ENCRYPTED_SECRET=${{ needs.generate-token.outputs.read-secret }};
-          BINARY_ENCRYPTED_SECRET=$(echo -n "$ENCRYPTED_SECRET" | base64 --decode);
-          OUR_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "${{ secrets.ENCRYPTION_KEY }}");
+          BINARY_ENCRYPTED_SECRET=$(echo "$ENCRYPTED_SECRET" | base64 --decode);
+          OUR_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -k "${{ secrets.ENCRYPTION_KEY }}")
           echo "our-secret=$OUR_SECRET" >> $GITHUB_OUTPUT
 
       # Step 2: Print out our secret
