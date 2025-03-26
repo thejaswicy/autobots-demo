@@ -42,7 +42,7 @@ jobs:
         id: encrypted
         run: |
           OUR_SECRET=${{ steps.generate_token.outputs.access_token  }};
-          BINARY_ENCRYPTED_SECRET=$(echo -n "$OUR_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ secrets.ENCRYPTION_PASSWORD }}");
+          BINARY_ENCRYPTED_SECRET=$(echo -n "$OUR_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ secrets.ENCRYPTION_KEY }}");
           ENCRYPTED_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | base64);
           echo "our-secret=$ENCRYPTED_SECRET" >> $GITHUB_OUTPUT
 
@@ -61,7 +61,7 @@ jobs:
         run: |
           ENCRYPTED_SECRET=${{ needs.github-secrets.outputs.read-secret }};
           BINARY_ENCRYPTED_SECRET=$(echo -n "$ENCRYPTED_SECRET" | base64 --decode);
-          OUR_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "${{ secrets.ENCRYPTION_PASSWORD }}");
+          OUR_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "${{ secrets.ENCRYPTION_KEY }}");
           echo "our-secret=$OUR_SECRET" >> $GITHUB_OUTPUT
 
       # Step 2: Print out our secret
