@@ -76,6 +76,6 @@ jobs:
 
       - name: Use encrypted token
         run: |
-          curl -H "Authorization: Bearer ${{ steps.decrypt-token.outputs.our-secret }}" \
+          curl -H "Authorization: Bearer $decrypted_secret" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/installation/repositories
