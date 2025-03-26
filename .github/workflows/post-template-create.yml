@@ -9,7 +9,7 @@ jobs:
     outputs:
       access_token: ${{ steps.env.outputs.access_token }}  # ✅ Pass token properly
       environment: ${{ steps.env.outputs.environment }}
-      encrypted_token: ${{ steps.env.outputs.encrypted }}  # ✅ Pass token properly
+      encrypted_token: ${{ steps.env.outputs.encrypted-secret }}  # ✅ Pass token properly
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,10 +40,9 @@ jobs:
       - name: Pass Encrypted Token
         id: encrypted
         run: |
-          echo -n "${{ steps.generate_token.outputs.access_token }}" | \
-          openssl enc -aes-256-cbc -pbkdf2 -a -salt -pass pass:"${{ secrets.ENCRYPTION_KEY }}" > encrypted_token.txt
-          echo "encrypted=$(cat encrypted_token.txt)" >> "$GITHUB_OUTPUT"
-          echo "$encrypted"
+          BINARY_ENCRYPTED_SECRET=$(echo -n "${{ steps.generate_token.outputs.access_token }}" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ secrets.ENCRYPTION_KEY }}");
+          ENCRYPTED_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | base64);
+          echo "encrypted-secret=$ENCRYPTED_SECRET" >> $GITHUB_OUTPUT
 
 
   use-token:
@@ -57,12 +56,12 @@ jobs:
           echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
 
       - name: Decrypt Access Token
-        id: decrypt_token
+        id: decrypt-token
         run: |
-          echo "${{ needs.generate-token.outputs.encrypted }}" > encrypted.txt
-          DECRYPTED_TOKEN=$(openssl enc -aes-256-cbc -d -pbkdf2 -a -salt -pass pass:"${{ secrets.ENCRYPTION_KEY }}" -in encrypted.txt)
-          echo "access_token=$DECRYPTED_TOKEN" >> "$GITHUB_ENV"
-
+          ENCRYPTED_SECRET=${{ needs.github-secrets.outputs.encrypted_token }};
+          BINARY_ENCRYPTED_SECRET=$(echo -n "$ENCRYPTED_SECRET" | base64 --decode);
+          OUR_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "${{ secrets.ENCRYPTION_PASSWORD }}");
+          echo "our-secret=$OUR_SECRET" >> $GITHUB_OUTPUT
 
       - name: Use access token
         run: |
@@ -72,6 +71,6 @@ jobs:
 
       - name: Use encrypted token
         run: |
-          curl -H "Authorization: Bearer $access_token" \
+          curl -H "Authorization: Bearer ${{ steps.decrypt-token.outputs.our-secret }}" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/installation/repositories
