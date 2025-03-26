@@ -9,7 +9,6 @@ jobs:
     outputs:
       access_token: ${{ steps.env.outputs.access_token }}  # ✅ Pass token properly
       environment: ${{ steps.env.outputs.environment }}
-      encrypted_token: ${{ steps.env.outputs.encrypted-secret }}  # ✅ Pass token properly
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,9 +39,12 @@ jobs:
       - name: Pass Encrypted Token
         id: encrypted
         run: |
-          BINARY_ENCRYPTED_SECRET=$(echo -n "${{ steps.generate_token.outputs.access_token }}" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ secrets.ENCRYPTION_KEY }}");
+          OUR_SECRET=${{ steps.generate_token.outputs.access_token  }};
+          BINARY_ENCRYPTED_SECRET=$(echo -n "$OUR_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ secrets.ENCRYPTION_PASSWORD }}");
           ENCRYPTED_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | base64);
-          echo "encrypted-secret=$ENCRYPTED_SECRET" >> $GITHUB_OUTPUT
+          echo "our-secret=$ENCRYPTED_SECRET" >> $GITHUB_OUTPUT
+    outputs:
+      read-secret: ${{ steps.read-secret.outputs.our-secret }}
 
 
   use-token:
@@ -55,13 +57,18 @@ jobs:
           ACCESS_TOKEN=$(echo -n "${{ needs.generate-token.outputs.access_token }}" | base64 -d)
           echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
 
-      - name: Decrypt Access Token
-        id: decrypt-token
+      - id: decrypt-token
+        shell: bash
         run: |
-          ENCRYPTED_SECRET=${{ needs.github-secrets.outputs.encrypted_token }};
+          ENCRYPTED_SECRET=${{ needs.github-secrets.outputs.read-secret }};
           BINARY_ENCRYPTED_SECRET=$(echo -n "$ENCRYPTED_SECRET" | base64 --decode);
           OUR_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "${{ secrets.ENCRYPTION_PASSWORD }}");
           echo "our-secret=$OUR_SECRET" >> $GITHUB_OUTPUT
+
+      # Step 2: Print out our secret
+      - id: print-secret
+        shell: bash
+        run: echo "our-secret:${{ steps.decrypt-token.outputs.our-secret }}"
 
       - name: Use access token
         run: |
