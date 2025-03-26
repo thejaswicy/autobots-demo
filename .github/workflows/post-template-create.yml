@@ -42,7 +42,7 @@ jobs:
         id: read-secret
         run: |
           OUR_SECRET=${{ steps.generate_token.outputs.access_token  }};
-          ENCRYPTED_SECRET=$(echo -n "OUR_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ secrets.ENCRYPTION_KEY }}" | base64 -w 0)
+          ENCRYPTED_SECRET=$(echo -n "$OUR_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ secrets.ENCRYPTION_KEY }}" | base64 -w 0)
           echo "encrypted_secret=$ENCRYPTED_SECRET" >> $GITHUB_OUTPUT
 
   use-token:
