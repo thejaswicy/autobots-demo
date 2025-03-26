@@ -61,7 +61,7 @@ jobs:
           ENCRYPTED_SECRET=${{ needs.generate-token.outputs.read-secret }};
           BINARY_ENCRYPTED_SECRET=$(echo -n "$ENCRYPTED_SECRET" | base64 --decode | tr -d '\n');
           DECRYPTED_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -k "${{ secrets.ENCRYPTION_KEY }}")
-          echo "decrypted_secret=$DECRYPTED_SECRET" >> $GITHUB_ENV
+          echo "DECRYPTED_SECRET=$DECRYPTED_SECRET" >> $GITHUB_ENV
 
       # # Step 2: Print out our secret
       # - id: print-secret
@@ -76,6 +76,6 @@ jobs:
 
       - name: Use encrypted token
         run: |
-          curl -H "Authorization: Bearer $decrypted_secret" \
+          curl -H "Authorization: Bearer $DECRYPTED_SECRET" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/installation/repositories
