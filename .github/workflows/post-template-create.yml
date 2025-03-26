@@ -43,6 +43,7 @@ jobs:
           echo -n "${{ steps.generate_token.outputs.access_token }}" | \
           openssl enc -aes-256-cbc -pbkdf2 -a -salt -pass pass:"${{ secrets.ENCRYPTION_KEY }}" > encrypted_token.txt
           echo "encrypted=$(cat encrypted_token.txt)" >> "$GITHUB_OUTPUT"
+          echo "$encrypted"
 
 
   use-token:
