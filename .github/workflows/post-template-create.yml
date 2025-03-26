@@ -9,6 +9,7 @@ jobs:
     outputs:
       access_token: ${{ steps.env.outputs.access_token }}  # ✅ Pass token properly
       environment: ${{ steps.env.outputs.environment }}
+      encrypted_token: ${{ steps.env.outputs.encrypted }}  # ✅ Pass token properly
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,15 +31,22 @@ jobs:
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/installation/repositories
 
-      - name: Debug Access Token
+      - name: Pass Encoded base 64 Token
         id: env
         run: |
           echo "Access Token: ${{ steps.generate_token.outputs.access_token }}"
           ACCESS_TOKEN=$(echo -n "${{ steps.generate_token.outputs.access_token }}" | base64 -w 0)
           echo "access_token=$ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
-          echo "::add-mask::prod"
-          env=$(echo -n "prod" | base64 -w 0)
-          echo "environment=$env" >> $GITHUB_OUTPUT
+          # echo "::add-mask::prod"
+          # env=$(echo -n "prod" | base64 -w 0)
+          # echo "environment=$env" >> $GITHUB_OUTPUT
+
+      - name: Pass Encrypted Token
+        id: encrypted
+        run: |
+          ENCRYPTED_TOKEN=$(echo -n "${{ steps.generate_token.outputs.access_token }}" | openssl enc -aes-256-cbc -a -salt -pass pass:"${{ secrets.ENCRYPTION_KEY }}")
+          echo "access_token=$ENCRYPTED_TOKEN" >> "$GITHUB_OUTPUT"
+
 
   use-token:
     runs-on: ubuntu-latest
@@ -49,9 +57,18 @@ jobs:
         run: |
           ACCESS_TOKEN=$(echo -n "${{ needs.generate-token.outputs.access_token }}" | base64 -d)
           echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
+          echo "${{ needs.generate-token.outputs.encrypted }}" > encrypted.txt
+          DECRYPTED_TOKEN=$(openssl enc -aes-256-cbc -d -a -salt -pass pass:"${{ secrets.ENCRYPTION_KEY }}" -in encrypted.txt)
+          echo "access_token=$DECRYPTED_TOKEN" >> "$GITHUB_ENV"
 
       - name: Use access token
         run: |
           curl -H "Authorization: Bearer $ACCESS_TOKEN" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/installation/repositories
+
+      - name: Use encrypted token
+        run: |
+          curl -H "Authorization: Bearer $access_token" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/installation/repositories
