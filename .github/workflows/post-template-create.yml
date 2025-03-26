@@ -39,7 +39,7 @@ jobs:
           echo "access_token=$ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
 
       - name: Pass Encrypted Token
-        id: encrypted
+        id: read-secret
         run: |
           OUR_SECRET=${{ steps.generate_token.outputs.access_token  }};
           BINARY_ENCRYPTED_SECRET=$(echo -n "$OUR_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ secrets.ENCRYPTION_KEY }}");
