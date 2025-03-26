@@ -9,6 +9,8 @@ jobs:
     outputs:
       access_token: ${{ steps.env.outputs.access_token }}  # ✅ Pass token properly
       environment: ${{ steps.env.outputs.environment }}
+      read-secret: ${{ steps.read-secret.outputs.our-secret }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -43,9 +45,6 @@ jobs:
           BINARY_ENCRYPTED_SECRET=$(echo -n "$OUR_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ secrets.ENCRYPTION_PASSWORD }}");
           ENCRYPTED_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | base64);
           echo "our-secret=$ENCRYPTED_SECRET" >> $GITHUB_OUTPUT
-    outputs:
-      read-secret: ${{ steps.read-secret.outputs.our-secret }}
-
 
   use-token:
     runs-on: ubuntu-latest
