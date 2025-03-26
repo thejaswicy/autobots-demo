@@ -34,18 +34,15 @@ jobs:
       - name: Pass Encoded base 64 Token
         id: env
         run: |
-          echo "Access Token: ${{ steps.generate_token.outputs.access_token }}"
           ACCESS_TOKEN=$(echo -n "${{ steps.generate_token.outputs.access_token }}" | base64 -w 0)
           echo "access_token=$ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
-          # echo "::add-mask::prod"
-          # env=$(echo -n "prod" | base64 -w 0)
-          # echo "environment=$env" >> $GITHUB_OUTPUT
 
       - name: Pass Encrypted Token
         id: encrypted
         run: |
-          ENCRYPTED_TOKEN=$(echo -n "${{ steps.generate_token.outputs.access_token }}" | openssl enc -aes-256-cbc -a -salt -pass pass:"${{ secrets.ENCRYPTION_KEY }}")
-          echo "access_token=$ENCRYPTED_TOKEN" >> "$GITHUB_OUTPUT"
+          echo -n "${{ steps.generate_token.outputs.access_token }}" | \
+          openssl enc -aes-256-cbc -pbkdf2 -a -salt -pass pass:"${{ secrets.ENCRYPTION_KEY }}" > encrypted_token.txt
+          echo "encrypted=$(cat encrypted_token.txt)" >> "$GITHUB_OUTPUT"
 
 
   use-token:
@@ -57,9 +54,14 @@ jobs:
         run: |
           ACCESS_TOKEN=$(echo -n "${{ needs.generate-token.outputs.access_token }}" | base64 -d)
           echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
+
+      - name: Decrypt Access Token
+        id: decrypt_token
+        run: |
           echo "${{ needs.generate-token.outputs.encrypted }}" > encrypted.txt
-          DECRYPTED_TOKEN=$(openssl enc -aes-256-cbc -d -a -salt -pass pass:"${{ secrets.ENCRYPTION_KEY }}" -in encrypted.txt)
+          DECRYPTED_TOKEN=$(openssl enc -aes-256-cbc -d -pbkdf2 -a -salt -pass pass:"${{ secrets.ENCRYPTION_KEY }}" -in encrypted.txt)
           echo "access_token=$DECRYPTED_TOKEN" >> "$GITHUB_ENV"
+
 
       - name: Use access token
         run: |
