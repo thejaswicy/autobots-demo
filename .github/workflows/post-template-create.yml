@@ -9,7 +9,7 @@ jobs:
     outputs:
       access_token: ${{ steps.env.outputs.access_token }}  # ✅ Pass token properly
       environment: ${{ steps.env.outputs.environment }}
-      read-secret: ${{ steps.read-secret.outputs.our-secret }}
+      read-secret: ${{ steps.read-secret.outputs.encrypted_secret }}
 
     steps:
       - name: Checkout repository
@@ -42,9 +42,8 @@ jobs:
         id: read-secret
         run: |
           OUR_SECRET=${{ steps.generate_token.outputs.access_token  }};
-          BINARY_ENCRYPTED_SECRET=$(echo -n "$OUR_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ secrets.ENCRYPTION_KEY }}");
-          ENCRYPTED_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | base64);
-          echo "our-secret=$ENCRYPTED_SECRET" >> $GITHUB_OUTPUT
+          ENCRYPTED_SECRET=$(echo -n "OUR_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ secrets.ENCRYPTION_KEY }}" | base64 -w 0)
+          echo "encrypted_secret=$ENCRYPTED_SECRET" >> $GITHUB_OUTPUT
 
   use-token:
     runs-on: ubuntu-latest
@@ -60,14 +59,14 @@ jobs:
         shell: bash
         run: |
           ENCRYPTED_SECRET=${{ needs.generate-token.outputs.read-secret }};
-          BINARY_ENCRYPTED_SECRET=$(echo "$ENCRYPTED_SECRET" | base64 --decode);
-          OUR_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -k "${{ secrets.ENCRYPTION_KEY }}")
-          echo "our-secret=$OUR_SECRET" >> $GITHUB_OUTPUT
+          BINARY_ENCRYPTED_SECRET=$(echo -n "$ENCRYPTED_SECRET" | base64 --decode | tr -d '\n');
+          DECRYPTED_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -k "${{ secrets.ENCRYPTION_KEY }}")
+          echo "decrypted_secret=$DECRYPTED_SECRET" >> $GITHUB_ENV
 
-      # Step 2: Print out our secret
-      - id: print-secret
-        shell: bash
-        run: echo "our-secret:${{ steps.decrypt-token.outputs.our-secret }}"
+      # # Step 2: Print out our secret
+      # - id: print-secret
+      #   shell: bash
+      #   run: echo "our-secret:${{ steps.decrypt-token.outputs.our-secret }}"
 
       - name: Use access token
         run: |
