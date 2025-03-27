@@ -7,8 +7,7 @@ jobs:
   generate-token:
     runs-on: ubuntu-latest
     outputs:
-      access_token: ${{ steps.env.outputs.access_token }}  # ✅ Pass token properly
-      environment: ${{ steps.env.outputs.environment }}
+      access_token: ${{ steps.env.outputs.access_token }}
       read-secret: ${{ steps.read-secret.outputs.encrypted_secret }}
 
     steps:
@@ -62,11 +61,6 @@ jobs:
           BINARY_ENCRYPTED_SECRET=$(echo -n "$ENCRYPTED_SECRET" | base64 --decode | tr -d '\n');
           DECRYPTED_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -k "${{ secrets.ENCRYPTION_KEY }}")
           echo "DECRYPTED_SECRET=$DECRYPTED_SECRET" >> $GITHUB_ENV
-
-      # # Step 2: Print out our secret
-      # - id: print-secret
-      #   shell: bash
-      #   run: echo "our-secret:${{ steps.decrypt-token.outputs.our-secret }}"
 
       - name: Use access token
         run: |
