@@ -1,20 +1,7 @@
 name: Generate Access Token from actions
 
 on:
-  workflow_call:
-    # inputs:
-    #   runs-on:
-    #     description: 'Define the type of machine that will process the workflow. [Choosing where a workflow runs](https://docs.github.com/en/actions/writing-workflows/choosing-where-your-workflow-runs)'
-    #     type: string
-    #     default: "['ubuntu-latest']"
-    #   app-id:
-    #     description: 'Git app ID'
-    #     type: string
-    #   private-key:
-    #     description: 'Git app private-token'
-    # secrets:
-    #   GIT_APP_PRIVATE_KEY:
-    #     required: true
+  workflow_dispatch:
 
 jobs:
   generate-token:
