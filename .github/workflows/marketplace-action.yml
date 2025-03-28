@@ -20,6 +20,7 @@ jobs:
           app-id: ${{ vars.GIT_APP_ID }}
           private-key: ${{ secrets.GIT_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: ${{ github.repository_name }}
 
       - name: Verify access token by listing repositories
         run: |
