@@ -31,12 +31,6 @@ jobs:
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/installation/repositories
 
-      - name: Pass Encoded base 64 Token
-        id: env
-        run: |
-          ACCESS_TOKEN=$(echo -n "${{ steps.generate_token.outputs.access_token }}" | base64 -w 0)
-          echo "access_token=$ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
-
       - name: Pass Encrypted Token
         id: read-secret
         run: |
@@ -48,12 +42,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: generate-token
     steps:
-      - name: Debug Access Token Before Use
-        id: token
-        run: |
-          ACCESS_TOKEN=$(echo -n "${{ needs.generate-token.outputs.access_token }}" | base64 -d)
-          echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
-
       - id: decrypt-token
         shell: bash
         run: |
@@ -61,12 +49,6 @@ jobs:
           BINARY_ENCRYPTED_SECRET=$(echo -n "$ENCRYPTED_SECRET" | base64 --decode | tr -d '\n');
           DECRYPTED_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -k "${{ secrets.ENCRYPTION_KEY }}")
           echo "DECRYPTED_SECRET=$DECRYPTED_SECRET" >> $GITHUB_ENV
-
-      - name: Use access token
-        run: |
-          curl -H "Authorization: Bearer $ACCESS_TOKEN" \
-               -H "Accept: application/vnd.github.v3+json" \
-               https://api.github.com/installation/repositories
 
       - name: Use encrypted token
         run: |

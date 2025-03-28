@@ -1,4 +1,4 @@
-name: Generate Access Token from actions
+name: Generate GitHub App Access Token
 
 on:
   workflow_dispatch:
@@ -6,6 +6,9 @@ on:
 jobs:
   generate-token:
     runs-on: ubuntu-latest
+    outputs:
+      access_token: ${{ steps.env.outputs.access_token }}
+      read-secret: ${{ steps.read-secret.outputs.encrypted_secret }}
 
     steps:
       - name: Checkout repository
@@ -17,9 +20,35 @@ jobs:
           app-id: ${{ vars.GIT_APP_ID }}
           private-key: ${{ secrets.GIT_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
 
       - name: Verify access token by listing repositories
         run: |
           curl -H "Authorization: Bearer ${{ steps.app-token.outputs.token }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/installation/repositories
+
+      - name: Pass Encrypted Token
+        id: read-secret
+        run: |
+          OUR_SECRET=${{ steps.app-token.outputs.token  }};
+          ENCRYPTED_SECRET=$(echo -n "$OUR_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${{ secrets.ENCRYPTION_KEY }}" | base64 -w 0)
+          echo "encrypted_secret=$ENCRYPTED_SECRET" >> $GITHUB_OUTPUT
+
+  use-token:
+    runs-on: ubuntu-latest
+    needs: generate-token
+    steps:
+      - id: decrypt-token
+        shell: bash
+        run: |
+          ENCRYPTED_SECRET=${{ needs.generate-token.outputs.read-secret }};
+          BINARY_ENCRYPTED_SECRET=$(echo -n "$ENCRYPTED_SECRET" | base64 --decode | tr -d '\n');
+          DECRYPTED_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -k "${{ secrets.ENCRYPTION_KEY }}")
+          echo "DECRYPTED_SECRET=$DECRYPTED_SECRET" >> $GITHUB_ENV
+
+      - name: Use encrypted token
+        run: |
+          curl -H "Authorization: Bearer $DECRYPTED_SECRET" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/installation/repositories
