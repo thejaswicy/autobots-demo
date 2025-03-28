@@ -1,4 +1,4 @@
-name: Generate GitHub App Access Token
+name: Marketplace action
 
 on:
   workflow_dispatch:
