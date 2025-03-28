@@ -21,6 +21,7 @@ jobs:
           private-key: ${{ secrets.GIT_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
+          skip-token-revoke: true
 
       - name: Verify access token by listing repositories
         run: |
