@@ -1,4 +1,4 @@
-name: Generate GitHub App Access Token
+name: Access Token using script
 
 on:
   workflow_dispatch:
