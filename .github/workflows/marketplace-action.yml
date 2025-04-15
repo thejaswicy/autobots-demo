@@ -20,7 +20,7 @@ jobs:
           repositories: ${{ github.event.repository.name }}
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set GH_TOKEN environment variable
         run: echo "GH_TOKEN=${{ steps.app-token.outputs.token }}" >> $GITHUB_ENV
