@@ -9,7 +9,7 @@ jobs:
 
     steps:
       - name: Create GitHub app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         id: app-token
         with:
           app-id: ${{ vars.GIT_APP_ID }}
@@ -33,7 +33,7 @@ jobs:
   #   runs-on: ubuntu-latest
   #   needs: generate-token
   #   steps:
-  #     - uses: actions/create-github-app-token@v1
+  #     - uses: actions/create-github-app-token@v2
   #       id: app-token
   #       with:
   #         app-id: ${{ vars.GIT_APP_ID }}
