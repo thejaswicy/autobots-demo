@@ -1,0 +1,12 @@
+---
+version: 2
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+updates:
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'daily'  # Changed from weekly to daily to trigger sooner
+    labels:
+      - 'type: chore'
+    reviewers:
+      - 'tandfgroup/everything-as-code-owners'
